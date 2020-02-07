@@ -1,0 +1,65 @@
+---
+title: "OA_Regression"
+author: "Yi-Hsuan Tsai"
+date: "2/7/2020"
+output: html_document
+---
+
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readxl)
+
+df <- read_excel("Adops & Data Scientist Sample Data.xlsx",2,col_names = F)
+colnames(df) <- c("A","B","C")
+```
+
+
+First, I would like to implement the simple linear regression model.
+
+```{r}
+lm1 <- lm(C~A+B, data=df)
+par(mfrow=c(2,2))
+plot(lm1)
+```
+
+We can see that there is an outlier in the model so I would drop it and refit the linear model.
+```{r}
+df <- filter(df, row_number() != 201)
+lm2 <- lm(C~A+B, data=df)
+par(mfrow=c(2,2))
+plot(lm2)
+summary(lm2)
+```
+
+The R-squared is not good in this model. It might be a good idea to look at the pair plot of the data to get some insight.
+
+```{r}
+pairs(df)
+```
+
+We can see that C is pretty different when A or B is below or above zero. And there should be sort of interaction between A and B.
+```{r}
+# Dummy variable
+df$B_positive <- ifelse(df$B>=0, yes=1,no=0 )
+df$A_positive <- ifelse(df$A>=0, yes=1,no=0 )
+
+lm3 <- lm(C ~ A*B, df)
+summary(lm3)
+```
+
+We can see that lm3 is much better than the lm2 with R-squared = 0.7226. Let's do some experiment with the positive term.
+
+```{r}
+lm4 <- lm(C ~ A*B*A_positive, df)
+summary(lm4)
+lm5 <- lm(C ~ A*B*B_positive, df)
+summary(lm5)
+```
+
+We can see that the lm4 perform super well. Which might imply how this data was generated based on A is positive or negatvie.
+So I will choose lm4 as my model.
+
+
